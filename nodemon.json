@@ -1,0 +1,10 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": [
+    "src/services/whatsapp.service.ts",
+    "src/services/api.service.ts",
+    "session/**"
+  ],
+  "exec": "ts-node src/index.ts"
+}
