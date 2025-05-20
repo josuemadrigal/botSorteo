@@ -1,5 +1,5 @@
 import { mensajePersonalizado } from "./mensajePesonalizado";
-import { premios } from "./premios";
+import { Premio, premios } from "./premios";
 
 export const convertirCedula = (cedula: string) => {
   const partes = cedula.split("-");
@@ -38,9 +38,6 @@ export function getHora(municipio) {
   return item ? item[Object.keys(item)[0]].Hora : "la hora indicada";
 }
 
-export function getPremio(premio) {
-  const item = premios.find(
-    (item) => Object.keys(item)[0].toLowerCase() === premio.toLowerCase()
-  );
-  return item ? item[Object.keys(item)[0]] : {};
+export function getPremio(slug_premio: string): Premio | null {
+  return premios[slug_premio] || null;
 }
