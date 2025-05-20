@@ -165,13 +165,16 @@ class WhatsAppService {
       console.error("Error al guardar el log:", error);
 
       // Intento alternativo con reintentos
-      await this.retrySaveMessage(phone, message);
+      await this.retrySaveMessage(phone, message, cedula, municipio, name);
     }
   }
 
   private async retrySaveMessage(
     phone: string,
     message: string,
+    cedula: string,
+    municipio: string,
+    name: string,
     attempts = 3
   ): Promise<void> {
     for (let i = 0; i < attempts; i++) {
@@ -181,6 +184,9 @@ class WhatsAppService {
 
         await collection.insertOne({
           phone,
+          name,
+          cedula,
+          municipio,
           message,
           timestamp: new Date(),
         });
@@ -192,6 +198,90 @@ class WhatsAppService {
         if (i === attempts - 1) throw retryError;
         await new Promise((resolve) => setTimeout(resolve, 2000 * (i + 1)));
       }
+    }
+  }
+
+  public async sendMessageGanador(
+    phone: string,
+    content: {
+      text?: string;
+      imageUrl?: string;
+      caption?: string;
+      cedula?: string;
+      municipio?: string;
+      name?: string;
+      premio?: string;
+      slug_premio?: string;
+    }
+  ) {
+    if (!this.isConnected) {
+      throw new Error("El bot no está conectado a WhatsApp");
+    }
+
+    const phoneUser = `${phone}@s.whatsapp.net`;
+    let result;
+
+    try {
+      if (content.imageUrl) {
+        // Enviar mensaje con imagen
+        result = await this.sock.sendMessage(phoneUser, {
+          image: { url: content.imageUrl },
+          caption: content.caption || content.text || "",
+          mimetype: this.getMimeTypeFromUrl(content.imageUrl),
+        });
+      } else if (content.text) {
+        // Enviar solo texto
+        result = await this.sock.sendMessage(phoneUser, {
+          text: content.text,
+          contextInfo: { mentionedphoneUser: [phoneUser] },
+        });
+      } else {
+        throw new Error("Debe proporcionar al menos texto o imagen");
+      }
+
+      await this.saveGanadorLog(
+        phone,
+        content.cedula,
+        content.municipio,
+        content.name,
+        content.premio,
+        content.slug_premio
+      );
+      return result;
+    } catch (error) {
+      console.error("Error al enviar mensaje:", error);
+      throw error;
+    }
+  }
+
+  private async saveGanadorLog(
+    phone: string,
+    cedula: string,
+    municipio: string,
+    name: string,
+    premio: string,
+    slug_premio: string
+  ): Promise<void> {
+    try {
+      const db = await mongoClientService.connect();
+      const collection = db.collection("ganadores");
+
+      await collection.insertOne({
+        phone,
+        name,
+        cedula,
+        premio,
+        slug_premio,
+        municipio,
+        timestamp: new Date(),
+      });
+
+      console.log("📝 Mensaje ganador guardado en MongoDB");
+    } catch (error) {
+      console.error("Error al guardar el log:", error);
+
+      // Intento alternativo con reintentos
+      //await this.retrySaveMessage(phone, message);
     }
   }
 

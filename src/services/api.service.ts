@@ -1,7 +1,13 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { whatsappService } from "./whatsapp.service";
-import { convertirCedula, getFecha, getHora, getLugar } from "../utils";
+import {
+  convertirCedula,
+  getFecha,
+  getHora,
+  getLugar,
+  getPremio,
+} from "../utils";
 
 class ApiService {
   private app: Express;
@@ -81,6 +87,85 @@ class ApiService {
           cedula: cedula,
           municipio: municipio,
           name: name,
+        });
+
+        res.json({
+          success: true,
+          message: "Enviado correctamente",
+        });
+      } catch (error: any) {
+        console.error("Error:", error);
+        res.status(500).json({
+          error: error.message || "Error interno del servidor",
+          details:
+            process.env.NODE_ENV === "development" ? error.stack : undefined,
+        });
+      }
+    });
+
+    this.app.post("/v1/ganador", async (req: Request, res: Response) => {
+      try {
+        const { phone, cedula, name, municipio, premio, slug_premio } =
+          req.body;
+
+        const nombre = name.trim().split(" ")[0];
+        const nombreFormateado =
+          nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+
+        const imgUrl =
+          "https://app.eduardespiritusanto.com/registrate-aqui-app.jpeg";
+
+        let municipioTitle;
+
+        switch (municipio) {
+          case "caleta":
+            municipioTitle = "Caleta";
+            break;
+          case "cumayasa":
+            municipioTitle = "Cumayasa";
+            break;
+          case "guaymate":
+            municipioTitle = "Guaymate";
+            break;
+          case "villa-hermosa":
+            municipioTitle = "Villa Hermosa";
+            break;
+          case "la-romana":
+            municipioTitle = "La Romana";
+            break;
+          default:
+            municipioTitle = "Municipio no válido";
+            break;
+        }
+        const getPremioWs = getPremio(slug_premio);
+
+        const defaultMessage = `🎉 *_MUCHAS FELICIDADES_* 🎉  *${nombreFormateado}*, has sido ganadora de *${
+          getPremioWs.title
+        }*. 
+        \nDebes pasar a recoger tu premio en *${municipioTitle}*, 📍 en *${getLugar(
+          municipio
+        )}*, 🗓️ el *${getFecha(municipio)}* a las *${getHora(municipio)}*. 
+        \nRecuerda que debes *llevar tu cédula* (${convertirCedula(
+          cedula
+        )}) para poder retirar tu premio. 
+        \n*¡Te esperamos! ☘️*
+        `;
+
+        if (!phone) {
+          return res
+            .status(400)
+            .json({ error: "El número de teléfono es requerido" });
+        }
+
+        await whatsappService.sendMessageGanador(phone, {
+          text: defaultMessage,
+          imageUrl: imgUrl,
+          caption: defaultMessage,
+          cedula: cedula,
+          municipio: municipioTitle,
+          name: name,
+          premio: getPremioWs.title,
+          slug_premio: slug_premio,
         });
 
         res.json({
