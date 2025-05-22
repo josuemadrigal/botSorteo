@@ -285,6 +285,84 @@ class WhatsAppService {
     }
   }
 
+  public async sendMessageRecordatorio(
+    phone: string,
+    content: {
+      text?: string;
+      imageUrl?: string;
+      caption?: string;
+      cedula?: string;
+      municipio?: string;
+      name?: string;
+      premio?: string;
+      slug_premio?: string;
+    }
+  ) {
+    if (!this.isConnected) {
+      throw new Error("El bot no está conectado a WhatsApp");
+    }
+
+    const phoneUser = `${phone}@s.whatsapp.net`;
+    let result;
+
+    try {
+      if (content.imageUrl) {
+        // Enviar mensaje con imagen
+        result = await this.sock.sendMessage(phoneUser, {
+          image: { url: content.imageUrl },
+          caption: content.caption || content.text || "",
+          mimetype: this.getMimeTypeFromUrl(content.imageUrl),
+        });
+      } else if (content.text) {
+        // Enviar solo texto
+        result = await this.sock.sendMessage(phoneUser, {
+          text: content.text,
+          contextInfo: { mentionedphoneUser: [phoneUser] },
+        });
+      } else {
+        throw new Error("Debe proporcionar al menos texto o imagen");
+      }
+
+      await this.saveRecordatorioLog(
+        phone,
+        content.cedula,
+        content.municipio,
+        content.name
+      );
+      return result;
+    } catch (error) {
+      console.error("Error al enviar mensaje:", error);
+      throw error;
+    }
+  }
+
+  private async saveRecordatorioLog(
+    phone: string,
+    cedula: string,
+    municipio: string,
+    name: string
+  ): Promise<void> {
+    try {
+      const db = await mongoClientService.connect();
+      const collection = db.collection("recordatorios");
+
+      await collection.insertOne({
+        phone,
+        name,
+        cedula,
+        municipio,
+        timestamp: new Date(),
+      });
+
+      console.log("📝 Mensaje ganador guardado en MongoDB");
+    } catch (error) {
+      console.error("Error al guardar el log:", error);
+
+      // Intento alternativo con reintentos
+      //await this.retrySaveMessage(phone, message);
+    }
+  }
+
   private getMimeTypeFromUrl(url: string): string {
     const extension = url.split(".").pop()?.split("?")[0].toLowerCase();
     switch (extension) {
