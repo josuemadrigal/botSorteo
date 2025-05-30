@@ -141,7 +141,7 @@ class ApiService {
 
         const defaultMessage = `🎉 *_MUCHAS FELICIDADES_* 🎉  *${nombreFormateado}*, has sido ganadora de *${
           getPremioWs.title
-        }*. 
+        }*, gracias por apoyar las actividades de tu senador _Eduard Espiritusanto_. 
         \n Debes pasar a recoger tu premio 📍 en la *OFICINA SENATORIAL*, ubicada en la Av. Padre Abreu #5, La Romana, frente a Frank Muebles, 🗓️ mañana *Sabado 31 de Mayo* a las *10:00* de la mañana. 
         \nRecuerda que debes *llevar tu cédula* (${convertirCedula(
           cedula
