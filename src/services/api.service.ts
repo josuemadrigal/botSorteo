@@ -160,7 +160,7 @@ class ApiService {
 
         await whatsappService.sendMessageGanador(phone, {
           text: defaultMessage,
-          imageUrl: imgUrl,
+          // imageUrl: imgUrl,
           caption: defaultMessage,
           cedula: cedula,
           municipio: municipioTitle,
