@@ -147,6 +147,9 @@ class ApiService {
           cedula
         )}) para poder retirar tu premio. 
         \n*¡Te esperamos! ☘️*
+        \n
+        Unete a nuestro grupo de whatsapp para *Madres con Eduard*, para que estes informada de todas nuestras actividades.
+        https://chat.whatsapp.com/IipgJE45h3D5FxgcstROMk
         `;
 
         if (!phone) {
